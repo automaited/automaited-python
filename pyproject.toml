@@ -1,0 +1,14 @@
+[project]
+name = "automaited"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Denis Golovin", email = "denis.golovin@automaited.com" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
