@@ -48,7 +48,8 @@ class AsyncDocExtClient:
         :return: An instance of the model class populated with extracted data.
         """
         if self._is_default_email():
-            self.logger.error("Please replace the placeholder email address in the API_KEY with your actual email address.\nYou will receive an email with a verification link. You will be granted early beta access after verification.")
+            self.logger.error("Please replace the placeholder email address in the API_KEY with your actual email address.\n"
+                            "You will receive an email with a verification link. Re-run the script afterwards.")
             return None
 
         if isinstance(file_path, str):
@@ -59,42 +60,71 @@ class AsyncDocExtClient:
         # Get the model's schema
         model_schema = model.model_json_schema()
 
-        # Prepare the files and form data
-        files = {
-            'pdf_file': (file_path.name, file_path.open('rb'), 'application/pdf')
-        }
-        
-        # Prepare form data
-        form_data = {
-            'model_schema': json.dumps(model_schema)
-        }
-
         try:
             async with httpx.AsyncClient() as client:
                 # Update headers for multipart/form-data
                 headers = self.headers.copy()
                 headers.pop('Content-Type', None)  # Remove Content-Type as it will be set automatically
 
-                response = await client.post(
-                    f"{self.base_url}/extract_model",
-                    headers=headers,
-                    files=files,
-                    data=form_data
-                )
+                # Submit the job
+                files = {
+                    'pdf_file': (file_path.name, file_path.open('rb'), 'application/pdf')
+                }
+                form_data = {
+                    'model_schema': json.dumps(model_schema)
+                }
 
-                if response.status_code != 200:
-                    self.logger.error(response.json().get('detail'))
-                    return None
+                try:
+                    submit_response = await client.post(
+                        f"{self.base_url}/extract_model/submit",
+                        headers=headers,
+                        files=files,
+                        data=form_data
+                    )
 
-                # Parse the response and create model instance
-                extracted_data = response.json()
-                return model.model_validate(extracted_data)
+                    if submit_response.status_code != 200:
+                        self.logger.error(submit_response.json().get('detail'))
+                        return None
+
+                    job_id = submit_response.json()['job_id']
+                finally:
+                    # Ensure the file is closed after submission
+                    files['pdf_file'][1].close()
+
+                # Poll for results
+                max_attempts = 60  # Maximum number of attempts (5 minutes with 5-second intervals)
+                attempt = 0
+                
+                while attempt < max_attempts:
+                    status_response = await client.get(
+                        f"{self.base_url}/extract_model/status/{job_id}",
+                        headers=headers
+                    )
+
+                    if status_response.status_code == 200:
+                        # Job completed successfully
+                        result_data = status_response.json()
+                        if result_data['status'] == 'completed':
+                            return model.model_validate(result_data['result'])
+                        else:  # status is 'failed'
+                            self.logger.error(f"Extraction failed: {result_data.get('error')}")
+                            return None
+                            
+                    elif status_response.status_code == 202:
+                        # Job still processing
+                        await asyncio.sleep(1)  # Wait 5 seconds before next attempt
+                        attempt += 1
+                    else:
+                        # Unexpected status code
+                        self.logger.error(f"Unexpected response: {status_response.json().get('detail')}")
+                        return None
+
+                # If we've reached here, we've exceeded maximum attempts
+                self.logger.error("Extraction timed out after 5 minutes")
+                return None
 
         except Exception as e:
             raise Exception(f"Extraction failed: {e}")
-        finally:
-            # Ensure the file is closed
-            files['pdf_file'][1].close()
         
 class DocExtClient:
     def __init__(self, API_KEY: str, base_url: str = "https://docextract.mainbackend.com/api/external_devs"):
