@@ -66,7 +66,7 @@ class AsyncDocExtClient:
         
         # Prepare form data
         form_data = {
-            'model_scehma': json.dumps(model_schema)
+            'model_schema': json.dumps(model_schema)
         }
 
         try:
