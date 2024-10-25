@@ -1,7 +1,7 @@
 [project]
 name = "automaited"
-version = "0.1.1"
-description = "Add your description here"
+version = "0.1.2"
+description = "The official Python library for the automaited API"
 readme = "README.md"
 authors = [
     { name = "Denis Golovin", email = "denis.golovin@automaited.com" }
