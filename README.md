@@ -13,7 +13,10 @@ pip install automaited
 
 ## Usage
 
-Define the target model you want to populate and pass it with the PDF that you want to process into the `.extract_model()` method. Here is an example:
+Define the target model you want to populate and pass it with the PDF that you want to process into the `.extract_model()` method. 
+Your first 1000 documents are free, just make sure to replace your email in the `API_KEY`. You will receive a verification mail with a link after running your extraction for the first time.
+The first run will fail, becuase your email (defined in your api key) isn't verified yet. After verification you can re-run your script and it should work.
+Here is an example:
 
 ```python
 from datetime import date
