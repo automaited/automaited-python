@@ -25,14 +25,14 @@ from automaited import DocExtClient
 # from automaited import AsyncDocExtClient
 
 class Article(BaseModel):
-    article_number: str = Field(..., description="Typically alphabetical or alphanumerical.")
-    description: str = Field(..., description="Description of the item.")
-    quantity: float = Field(..., description="Number of pieces.")
+    article_number: str | None = Field(None, description="Typically alphabetical or alphanumerical.")
+    description: str | None = Field(None, description="Description of the item.")
+    quantity: float | None = Field(None, description="Number of pieces.")
 
 class PurchaseOrder(BaseModel):
-    customer_name: str = Field(..., description="Examples: Kaladent Inc., Henkel GmbH")
-    order_number: str = Field(..., description="The purchase order number.")
-    order_date: date = Field(..., description="The purchase order date.")
+    customer_name: str | None = Field(None, description="Examples: Kaladent Inc., Henkel GmbH")
+    order_number: str | None = Field(None, description="The purchase order number.")
+    order_date: date | None = Field(None, description="The purchase order date.")
     items: list[Article] = Field(default_factory=list, description="List of all ordered articles.")
 
 client = DocExtClient(API_KEY="TEST_BETA:you@company.com") # Replace the email with yours. As soon as we are out of beta you will receive a proper API key for production.
